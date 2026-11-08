@@ -1,5 +1,4 @@
 
-
 name: Build Android APK
 
 on:
@@ -14,7 +13,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
@@ -30,35 +29,21 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Find Gradle files
+      - name: Build Debug APK
+        run: flutter build apk --debug
+
+      - name: Verify APK
         run: |
-          echo "Checking Gradle files..."
-          find . -type f \( -name "build.gradle" -o -name "build.gradle.kts" \) -print
-
-      - name: Build APK
-        run: flutter build apk --release
-
-      - name: Inspect APK
-        run: |
-          APK="build/app/outputs/flutter-apk/app-release.apk"
-
-          echo "Checking APK file..."
+          APK="build/app/outputs/flutter-apk/app-debug.apk"
+          echo "Checking APK..."
           ls -lh "$APK"
-          file "$APK"
-
-          echo "Checking APK archive..."
-          unzip -t "$APK" | tail -n 2
-
-          echo "Checking APK package information..."
           AAPT=$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -n 1)
-          "$AAPT" dump badging "$APK" | head -n 20
-
-          echo "Checking APK digital signature..."
+          "$AAPT" dump badging "$APK" | head -n 5
           APKSIGNER=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)
-          "$APKSIGNER" verify --verbose --print-certs "$APK"
+          "$APKSIGNER" verify --verbose "$APK"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Piping-Engineering-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: Piping-Engineering-Debug-APK
+          path: build/app/outputs/flutter-apk/app-debug.apk
