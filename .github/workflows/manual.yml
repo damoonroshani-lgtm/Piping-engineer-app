@@ -1,3 +1,4 @@
+
 name: Build Android APK
 
 on:
@@ -21,6 +22,9 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+
+      - name: Create Android project
+        run: flutter create --platforms=android --project-name piping_engineer --org com.example --overwrite .
 
       - name: Get dependencies
         run: flutter pub get
