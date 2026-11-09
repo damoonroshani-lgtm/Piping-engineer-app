@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 class AppText extends StatelessWidget {
@@ -18,7 +19,7 @@ class AppText extends StatelessWidget {
 
   String _prepareText(String value) {
     final pattern = RegExp(
-      r'[A-Za-z0-9][A-Za-z0-9&._/#:+-]*(?:[ \t]+[A-Za-z0-9&._/#:+-]+)*',
+      r'[A-Za-z][A-Za-z0-9&._/#:+-]*(?:[ \t]+[A-Za-z0-9&._/#:+-]+)*',
     );
 
     return value.replaceAllMapped(
