@@ -1,10 +1,42 @@
 
+import 'dart:async';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:piping_engineer/core/theme/app_theme.dart';
+import 'package:piping_engineer/core/diagnostics/error_logger.dart';
 import 'package:piping_engineer/features/notes/pages/notes_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+
+    unawaited(
+      ErrorLogger.instance.saveError(
+        details.exceptionAsString(),
+        source: 'Flutter Framework',
+        stackTrace: details.stack?.toString(),
+      ),
+    );
+  };
+
+  ui.PlatformDispatcher.instance.onError = (
+    Object error,
+    StackTrace stack,
+  ) {
+    unawaited(
+      ErrorLogger.instance.saveError(
+        error.toString(),
+        source: 'Platform Dispatcher',
+        stackTrace: stack.toString(),
+      ),
+    );
+
+    return false;
+  };
+
   runApp(const PipingApp());
 }
 
