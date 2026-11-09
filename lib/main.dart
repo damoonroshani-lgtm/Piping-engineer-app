@@ -1,7 +1,9 @@
 
 import 'package:flutter/material.dart';
+import 'package:piping_engineer/core/theme/app_theme.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const PipingApp());
 }
 
@@ -13,12 +15,7 @@ class PipingApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Piping Engineering',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: const Color(0xFF07569A),
-        scaffoldBackgroundColor: const Color(0xFFF3F6FA),
-        fontFamily: 'Roboto',
-      ),
+      theme: AppTheme.lightTheme,
       home: const Directionality(
         textDirection: TextDirection.rtl,
         child: HomePage(),
@@ -66,8 +63,6 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF083D70),
-        foregroundColor: Colors.white,
         title: const Text(
           'Piping Engineering',
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -119,9 +114,7 @@ class HomePage extends StatelessWidget {
             Icons.menu_book,
             () => Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => const LessonsPage(),
-              ),
+              MaterialPageRoute(builder: (_) => const LessonsPage()),
             ),
           ),
           _menuCard(
@@ -154,10 +147,7 @@ class HomePage extends StatelessWidget {
                 children: [
                   Text(
                     'هدف آموزشی ما',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 17,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
                   ),
                   SizedBox(height: 8),
                   Text(
@@ -189,10 +179,7 @@ class HomePage extends StatelessWidget {
           backgroundColor: const Color(0xFFE0EDFA),
           child: Icon(icon, color: const Color(0xFF07569A)),
         ),
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.arrow_back_ios_new, size: 17),
         onTap: action,
@@ -213,11 +200,7 @@ class LessonsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('دوره جامع آموزشی'),
-        backgroundColor: const Color(0xFF083D70),
-        foregroundColor: Colors.white,
-      ),
+      appBar: AppBar(title: const Text('دوره جامع آموزشی')),
       body: ListView.builder(
         padding: const EdgeInsets.all(12),
         itemCount: lessons.length,
@@ -230,10 +213,7 @@ class LessonsPage extends StatelessWidget {
               contentPadding: const EdgeInsets.all(12),
               leading: CircleAvatar(
                 backgroundColor: const Color(0xFFE0EDFA),
-                child: Icon(
-                  lesson.icon,
-                  color: const Color(0xFF07569A),
-                ),
+                child: Icon(lesson.icon, color: const Color(0xFF07569A)),
               ),
               title: Text(
                 'درس ${lesson.number}: ${lesson.title}',
@@ -265,26 +245,16 @@ class LessonPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('درس ${lesson.number}'),
-        backgroundColor: const Color(0xFF083D70),
-        foregroundColor: Colors.white,
-      ),
+      appBar: AppBar(title: Text('درس ${lesson.number}')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Text(
             lesson.title,
-            style: const TextStyle(
-              fontSize: 23,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 23, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          Text(
-            lesson.subtitle,
-            style: const TextStyle(color: Colors.blueGrey),
-          ),
+          Text(lesson.subtitle, style: const TextStyle(color: Colors.blueGrey)),
           const SizedBox(height: 20),
           if (lesson.number == 6)
             const ValveLesson()
@@ -332,7 +302,7 @@ class ValveLesson extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         _valve('Gate Valve', 'شیر کشویی', 'قطع و وصل کامل جریان'),
-        _valve('Globe Valve', 'شیر سوزنی / کروی', 'تنظیم جریان'),
+        _valve('Globe Valve', 'شیر کروی', 'تنظیم جریان'),
         _valve('Ball Valve', 'شیر توپی', 'قطع و وصل سریع'),
         _valve('Butterfly Valve', 'شیر پروانه‌ای', 'کنترل و قطع جریان'),
         _valve('Check Valve', 'شیر یک‌طرفه', 'جلوگیری از برگشت جریان'),
@@ -347,11 +317,7 @@ class ValveLesson extends StatelessWidget {
             padding: EdgeInsets.all(16),
             child: Column(
               children: [
-                Icon(
-                  Icons.settings,
-                  size: 85,
-                  color: Color(0xFF07569A),
-                ),
+                Icon(Icons.settings, size: 85, color: Color(0xFF07569A)),
                 Text(
                   'تصویر فنی برش‌خورده شیر کشویی در مرحله بعد اضافه می‌شود.',
                   textAlign: TextAlign.center,
