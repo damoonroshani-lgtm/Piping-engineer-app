@@ -9,7 +9,6 @@ class NoteModel {
   final String? sourceTitle;
   final String? anchorId;
 
-  // Normalized image coordinates (0.0 to 1.0)
   final double? markerX;
   final double? markerY;
 
@@ -66,26 +65,40 @@ class NoteModel {
     int? id,
     String? title,
     String? content,
-    String? sourceType,
-    String? sourceId,
-    String? sourceTitle,
-    String? anchorId,
-    double? markerX,
-    double? markerY,
+    Object? sourceType = _unchanged,
+    Object? sourceId = _unchanged,
+    Object? sourceTitle = _unchanged,
+    Object? anchorId = _unchanged,
+    Object? markerX = _unchanged,
+    Object? markerY = _unchanged,
     DateTime? updatedAt,
   }) {
     return NoteModel(
       id: id ?? this.id,
       title: title ?? this.title,
       content: content ?? this.content,
-      sourceType: sourceType ?? this.sourceType,
-      sourceId: sourceId ?? this.sourceId,
-      sourceTitle: sourceTitle ?? this.sourceTitle,
-      anchorId: anchorId ?? this.anchorId,
-      markerX: markerX ?? this.markerX,
-      markerY: markerY ?? this.markerY,
+      sourceType: identical(sourceType, _unchanged)
+          ? this.sourceType
+          : sourceType as String?,
+      sourceId: identical(sourceId, _unchanged)
+          ? this.sourceId
+          : sourceId as String?,
+      sourceTitle: identical(sourceTitle, _unchanged)
+          ? this.sourceTitle
+          : sourceTitle as String?,
+      anchorId: identical(anchorId, _unchanged)
+          ? this.anchorId
+          : anchorId as String?,
+      markerX: identical(markerX, _unchanged)
+          ? this.markerX
+          : markerX as double?,
+      markerY: identical(markerY, _unchanged)
+          ? this.markerY
+          : markerY as double?,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }
+
+const _unchanged = Object();
