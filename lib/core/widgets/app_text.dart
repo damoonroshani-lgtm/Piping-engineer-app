@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 class AppText extends StatelessWidget {
@@ -17,12 +16,30 @@ class AppText extends StatelessWidget {
     this.overflow,
   });
 
+  String _prepareBidiText(String value) {
+    // RLM: Right-to-Left Mark
+    // LRI/PDI: Isolate embedded text direction.
+    final result = StringBuffer();
+
+    for (final rune in value.runes) {
+      final character = String.fromCharCode(rune);
+
+      if (RegExp(r'[\u0600-\u06FF]').hasMatch(character)) {
+        result.write('\u200F');
+      } else {
+        result.write(character);
+      }
+    }
+
+    return result.toString();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Text(
-        text,
+        _prepareBidiText(text),
         textDirection: TextDirection.rtl,
         textAlign: textAlign ?? TextAlign.start,
         style: style,
