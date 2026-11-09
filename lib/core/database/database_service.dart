@@ -2,6 +2,7 @@
 import 'package:path/path.dart' as path;
 import 'package:sqflite/sqflite.dart';
 
+import 'package:piping_engineer/core/diagnostics/error_logger.dart';
 import 'package:piping_engineer/features/notes/models/note_model.dart';
 
 class DatabaseService {
@@ -14,26 +15,52 @@ class DatabaseService {
 
   Database? _database;
 
-  Future<Database> get database async {
-    if (_database != null) {
-      return _database!;
+  /// اجرای عملیات همراه با ثبت خطا
+  Future<T> _runWithLogging<T>(
+    String operation,
+    Future<T> Function() action,
+  ) async {
+    try {
+      return await action();
+    } catch (error, stackTrace) {
+      await ErrorLogger.instance.saveError(
+        error.toString(),
+        source: 'DatabaseService',
+        errorType: error.runtimeType.toString(),
+        operation: operation,
+        page: 'Database',
+        stackTrace: stackTrace.toString(),
+      );
+
+      rethrow;
     }
+  }
 
-    final databasePath = await getDatabasesPath();
-    final fullPath = path.join(databasePath, databaseName);
+  Future<Database> get database async {
+    return _runWithLogging(
+      'Open database',
+      () async {
+        if (_database != null) {
+          return _database!;
+        }
 
-    final openedDatabase = await openDatabase(
-      fullPath,
-      version: databaseVersion,
-      onConfigure: (db) async {
-        await db.execute('PRAGMA foreign_keys = ON');
+        final databasePath = await getDatabasesPath();
+        final fullPath = path.join(databasePath, databaseName);
+
+        final openedDatabase = await openDatabase(
+          fullPath,
+          version: databaseVersion,
+          onConfigure: (db) async {
+            await db.execute('PRAGMA foreign_keys = ON');
+          },
+          onCreate: _createDatabase,
+          onUpgrade: _upgradeDatabase,
+        );
+
+        _database = openedDatabase;
+        return openedDatabase;
       },
-      onCreate: _createDatabase,
-      onUpgrade: _upgradeDatabase,
     );
-
-    _database = openedDatabase;
-    return openedDatabase;
   }
 
   Future<void> _createDatabase(
@@ -103,237 +130,318 @@ class DatabaseService {
     String? anchorId,
     double? markerX,
     double? markerY,
-  }) async {
-    _validateMarker(markerX, markerY);
+  }) {
+    return _runWithLogging(
+      'Add note',
+      () async {
+        _validateMarker(markerX, markerY);
 
-    final db = await database;
-    final now = DateTime.now().toIso8601String();
+        final db = await database;
+        final now = DateTime.now().toIso8601String();
 
-    return db.insert('notes', {
-      'title': title.trim(),
-      'content': content,
-      'source_type': sourceType,
-      'source_id': sourceId,
-      'source_title': sourceTitle,
-      'anchor_id': anchorId,
-      'marker_x': markerX,
-      'marker_y': markerY,
-      'created_at': now,
-      'updated_at': now,
-    });
+        return db.insert('notes', {
+          'title': title.trim(),
+          'content': content,
+          'source_type': sourceType,
+          'source_id': sourceId,
+          'source_title': sourceTitle,
+          'anchor_id': anchorId,
+          'marker_x': markerX,
+          'marker_y': markerY,
+          'created_at': now,
+          'updated_at': now,
+        });
+      },
+    );
   }
 
-  Future<int> addNoteModel(NoteModel note) async {
-    _validateMarker(note.markerX, note.markerY);
+  Future<int> addNoteModel(NoteModel note) {
+    return _runWithLogging(
+      'Add note model',
+      () async {
+        _validateMarker(note.markerX, note.markerY);
 
-    final db = await database;
-    final now = DateTime.now().toIso8601String();
+        final db = await database;
+        final now = DateTime.now().toIso8601String();
 
-    return db.insert('notes', {
-      'title': note.title.trim(),
-      'content': note.content,
-      'source_type': note.sourceType,
-      'source_id': note.sourceId,
-      'source_title': note.sourceTitle,
-      'anchor_id': note.anchorId,
-      'marker_x': note.markerX,
-      'marker_y': note.markerY,
-      'created_at': note.createdAt.toIso8601String(),
-      'updated_at': now,
-    });
+        return db.insert('notes', {
+          'title': note.title.trim(),
+          'content': note.content,
+          'source_type': note.sourceType,
+          'source_id': note.sourceId,
+          'source_title': note.sourceTitle,
+          'anchor_id': note.anchorId,
+          'marker_x': note.markerX,
+          'marker_y': note.markerY,
+          'created_at': note.createdAt.toIso8601String(),
+          'updated_at': now,
+        });
+      },
+    );
   }
 
   Future<int> updateNote({
     required int id,
     required String title,
     required String content,
-  }) async {
-    final db = await database;
+  }) {
+    return _runWithLogging(
+      'Update note',
+      () async {
+        final db = await database;
 
-    return db.update(
-      'notes',
-      {
-        'title': title.trim(),
-        'content': content,
-        'updated_at': DateTime.now().toIso8601String(),
+        return db.update(
+          'notes',
+          {
+            'title': title.trim(),
+            'content': content,
+            'updated_at': DateTime.now().toIso8601String(),
+          },
+          where: 'id = ?',
+          whereArgs: [id],
+        );
       },
-      where: 'id = ?',
-      whereArgs: [id],
     );
   }
 
-  Future<int> updateNoteModel(NoteModel note) async {
-    if (note.id == null) {
-      throw ArgumentError('Note ID is required for updating.');
-    }
+  Future<int> updateNoteModel(NoteModel note) {
+    return _runWithLogging(
+      'Update note model',
+      () async {
+        if (note.id == null) {
+          throw ArgumentError('Note ID is required for updating.');
+        }
 
-    _validateMarker(note.markerX, note.markerY);
+        _validateMarker(note.markerX, note.markerY);
 
-    final db = await database;
+        final db = await database;
 
-    return db.update(
-      'notes',
-      {
-        'title': note.title.trim(),
-        'content': note.content,
-        'source_type': note.sourceType,
-        'source_id': note.sourceId,
-        'source_title': note.sourceTitle,
-        'anchor_id': note.anchorId,
-        'marker_x': note.markerX,
-        'marker_y': note.markerY,
-        'updated_at': DateTime.now().toIso8601String(),
+        return db.update(
+          'notes',
+          {
+            'title': note.title.trim(),
+            'content': note.content,
+            'source_type': note.sourceType,
+            'source_id': note.sourceId,
+            'source_title': note.sourceTitle,
+            'anchor_id': note.anchorId,
+            'marker_x': note.markerX,
+            'marker_y': note.markerY,
+            'updated_at': DateTime.now().toIso8601String(),
+          },
+          where: 'id = ?',
+          whereArgs: [note.id],
+        );
       },
-      where: 'id = ?',
-      whereArgs: [note.id],
     );
   }
 
-  Future<NoteModel?> getNoteById(int id) async {
-    final db = await database;
+  Future<NoteModel?> getNoteById(int id) {
+    return _runWithLogging(
+      'Get note by ID',
+      () async {
+        final db = await database;
 
-    final results = await db.query(
-      'notes',
-      where: 'id = ?',
-      whereArgs: [id],
-      limit: 1,
+        final results = await db.query(
+          'notes',
+          where: 'id = ?',
+          whereArgs: [id],
+          limit: 1,
+        );
+
+        if (results.isEmpty) {
+          return null;
+        }
+
+        return NoteModel.fromMap(results.first);
+      },
     );
-
-    if (results.isEmpty) {
-      return null;
-    }
-
-    return NoteModel.fromMap(results.first);
   }
 
-  Future<List<NoteModel>> getAllNoteModels() async {
-    final db = await database;
+  Future<List<NoteModel>> getAllNoteModels() {
+    return _runWithLogging(
+      'Get all note models',
+      () async {
+        final db = await database;
 
-    final results = await db.query(
-      'notes',
-      orderBy: 'updated_at DESC',
+        final results = await db.query(
+          'notes',
+          orderBy: 'updated_at DESC',
+        );
+
+        return results.map(NoteModel.fromMap).toList();
+      },
     );
-
-    return results.map(NoteModel.fromMap).toList();
   }
 
-  Future<List<Map<String, dynamic>>> getAllNotes() async {
-    final db = await database;
+  Future<List<Map<String, dynamic>>> getAllNotes() {
+    return _runWithLogging(
+      'Get all notes',
+      () async {
+        final db = await database;
 
-    return db.query(
-      'notes',
-      orderBy: 'updated_at DESC',
+        return db.query(
+          'notes',
+          orderBy: 'updated_at DESC',
+        );
+      },
     );
   }
 
   Future<List<Map<String, dynamic>>> searchNotes(
     String query,
-  ) async {
-    final searchText = query.trim();
+  ) {
+    return _runWithLogging(
+      'Search notes',
+      () async {
+        final searchText = query.trim();
 
-    if (searchText.isEmpty) {
-      return getAllNotes();
-    }
+        if (searchText.isEmpty) {
+          return getAllNotes();
+        }
 
-    final db = await database;
-    final search = '%$searchText%';
+        final db = await database;
+        final search = '%$searchText%';
 
-    return db.query(
-      'notes',
-      where: 'title LIKE ? OR content LIKE ? OR source_title LIKE ?',
-      whereArgs: [search, search, search],
-      orderBy: 'updated_at DESC',
+        return db.query(
+          'notes',
+          where: 'title LIKE ? OR content LIKE ? OR source_title LIKE ?',
+          whereArgs: [search, search, search],
+          orderBy: 'updated_at DESC',
+        );
+      },
     );
   }
 
-  Future<List<NoteModel>> searchNoteModels(String query) async {
-    final results = await searchNotes(query);
+  Future<List<NoteModel>> searchNoteModels(String query) {
+    return _runWithLogging(
+      'Search note models',
+      () async {
+        final results = await searchNotes(query);
 
-    return results.map(NoteModel.fromMap).toList();
+        return results.map(NoteModel.fromMap).toList();
+      },
+    );
   }
 
-  Future<int> deleteNote(int id) async {
-    final db = await database;
+  Future<int> deleteNote(int id) {
+    return _runWithLogging(
+      'Delete note',
+      () async {
+        final db = await database;
 
-    return db.transaction((transaction) async {
-      return transaction.delete(
-        'notes',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
-    });
+        return db.transaction((transaction) async {
+          return transaction.delete(
+            'notes',
+            where: 'id = ?',
+            whereArgs: [id],
+          );
+        });
+      },
+    );
   }
 
   Future<int> addAttachment({
     required int noteId,
     required String filePath,
     String? fileName,
-  }) async {
-    final db = await database;
+  }) {
+    return _runWithLogging(
+      'Add note attachment',
+      () async {
+        final db = await database;
 
-    final note = await db.query(
-      'notes',
-      columns: ['id'],
-      where: 'id = ?',
-      whereArgs: [noteId],
-      limit: 1,
+        final note = await db.query(
+          'notes',
+          columns: ['id'],
+          where: 'id = ?',
+          whereArgs: [noteId],
+          limit: 1,
+        );
+
+        if (note.isEmpty) {
+          throw ArgumentError(
+            'The requested note does not exist.',
+          );
+        }
+
+        return db.insert('note_attachments', {
+          'note_id': noteId,
+          'file_path': filePath,
+          'file_name': fileName,
+          'created_at': DateTime.now().toIso8601String(),
+        });
+      },
     );
-
-    if (note.isEmpty) {
-      throw ArgumentError('The requested note does not exist.');
-    }
-
-    return db.insert('note_attachments', {
-      'note_id': noteId,
-      'file_path': filePath,
-      'file_name': fileName,
-      'created_at': DateTime.now().toIso8601String(),
-    });
   }
 
   Future<List<Map<String, dynamic>>> getAttachments(
     int noteId,
-  ) async {
-    final db = await database;
+  ) {
+    return _runWithLogging(
+      'Get note attachments',
+      () async {
+        final db = await database;
 
-    return db.query(
-      'note_attachments',
-      where: 'note_id = ?',
-      whereArgs: [noteId],
-      orderBy: 'created_at ASC',
+        return db.query(
+          'note_attachments',
+          where: 'note_id = ?',
+          whereArgs: [noteId],
+          orderBy: 'created_at ASC',
+        );
+      },
     );
   }
 
-  Future<int> deleteAttachmentRecord(int attachmentId) async {
-    final db = await database;
+  Future<int> deleteAttachmentRecord(int attachmentId) {
+    return _runWithLogging(
+      'Delete attachment record',
+      () async {
+        final db = await database;
 
-    return db.delete(
-      'note_attachments',
-      where: 'id = ?',
-      whereArgs: [attachmentId],
+        return db.delete(
+          'note_attachments',
+          where: 'id = ?',
+          whereArgs: [attachmentId],
+        );
+      },
     );
   }
 
-  void _validateMarker(double? markerX, double? markerY) {
+  void _validateMarker(
+    double? markerX,
+    double? markerY,
+  ) {
     if (markerX != null && (markerX < 0 || markerX > 1)) {
-      throw ArgumentError('markerX must be between 0 and 1.');
+      throw ArgumentError(
+        'markerX must be between 0 and 1.',
+      );
     }
 
     if (markerY != null && (markerY < 0 || markerY > 1)) {
-      throw ArgumentError('markerY must be between 0 and 1.');
+      throw ArgumentError(
+        'markerY must be between 0 and 1.',
+      );
     }
 
     if ((markerX == null) != (markerY == null)) {
-      throw ArgumentError('Both marker coordinates must be provided together.');
+      throw ArgumentError(
+        'Both marker coordinates must be provided together.',
+      );
     }
   }
 
-  Future<void> close() async {
-    final currentDatabase = _database;
+  Future<void> close() {
+    return _runWithLogging(
+      'Close database',
+      () async {
+        final currentDatabase = _database;
 
-    if (currentDatabase != null) {
-      await currentDatabase.close();
-      _database = null;
-    }
+        if (currentDatabase != null) {
+          await currentDatabase.close();
+          _database = null;
+        }
+      },
+    );
   }
 }
