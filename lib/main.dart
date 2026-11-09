@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:piping_engineer/core/theme/app_theme.dart';
 import 'package:piping_engineer/core/diagnostics/error_logger.dart';
+import 'package:piping_engineer/core/diagnostics/error_log_page.dart';
 import 'package:piping_engineer/features/notes/pages/notes_page.dart';
 
 void main() {
@@ -158,6 +159,16 @@ class HomePage extends StatelessWidget {
             () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const NotesPage()),
+            ),
+          ),
+          _menuCard(
+            context,
+            'گزارش خطاهای برنامه',
+            'مشاهده و کپی گزارش خطا برای بررسی',
+            Icons.bug_report,
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ErrorLogPage()),
             ),
           ),
           _menuCard(
