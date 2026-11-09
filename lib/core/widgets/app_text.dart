@@ -21,13 +21,8 @@ class AppText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Text.rich(
-        TextSpan(
-          text: '',
-          children: [
-            TextSpan(text: text),
-          ],
-        ),
+      child: Text(
+        text,
         textDirection: TextDirection.rtl,
         textAlign: textAlign ?? TextAlign.start,
         style: style,
