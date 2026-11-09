@@ -16,36 +16,26 @@ class AppText extends StatelessWidget {
     this.overflow,
   });
 
-  String _prepareBidiText(String value) {
-    // RLM: Right-to-Left Mark
-    // LRI/PDI: Isolate embedded text direction.
-    final result = StringBuffer();
+  String _prepareText(String value) {
+    final pattern = RegExp(
+      r'[A-Za-z0-9][A-Za-z0-9&._/#:+-]*(?:[ \t]+[A-Za-z0-9&._/#:+-]+)*',
+    );
 
-    for (final rune in value.runes) {
-      final character = String.fromCharCode(rune);
-
-      if (RegExp(r'[\u0600-\u06FF]').hasMatch(character)) {
-        result.write('\u200F');
-      } else {
-        result.write(character);
-      }
-    }
-
-    return result.toString();
+    return value.replaceAllMapped(
+      pattern,
+      (match) => '\u2066${match.group(0)}\u2069',
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
+    return Text(
+      _prepareText(text),
       textDirection: TextDirection.rtl,
-      child: Text(
-        _prepareBidiText(text),
-        textDirection: TextDirection.rtl,
-        textAlign: textAlign ?? TextAlign.start,
-        style: style,
-        maxLines: maxLines,
-        overflow: overflow,
-      ),
+      textAlign: textAlign ?? TextAlign.start,
+      style: style,
+      maxLines: maxLines,
+      overflow: overflow,
     );
   }
 }
