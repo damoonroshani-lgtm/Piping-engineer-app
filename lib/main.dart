@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:ui' as ui;
 
@@ -8,6 +7,7 @@ import 'package:piping_engineer/core/diagnostics/error_logger.dart';
 import 'package:piping_engineer/core/diagnostics/error_log_page.dart';
 import 'package:piping_engineer/features/notes/pages/notes_page.dart';
 import 'package:piping_engineer/core/widgets/app_text.dart';
+import 'package:piping_engineer/core/widgets/valve_diagrams.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -1237,6 +1237,10 @@ class ValveLesson extends StatelessWidget {
               ],
             ),
             const Divider(height: 24),
+
+            // نمایش شکل شماتیک اختصاصی شیر
+            ValveDiagramCard(type: title),
+
             const AppText(
               'نحوه عملکرد',
               style: TextStyle(fontWeight: FontWeight.bold),
