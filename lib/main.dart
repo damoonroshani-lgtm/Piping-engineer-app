@@ -14,7 +14,6 @@ void main() {
 
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
-
     unawaited(
       ErrorLogger.instance.saveError(
         details.exceptionAsString(),
@@ -35,7 +34,6 @@ void main() {
         stackTrace: stack.toString(),
       ),
     );
-
     return false;
   };
 
@@ -320,7 +318,9 @@ class LessonPage extends StatelessWidget {
             style: const TextStyle(color: Colors.blueGrey),
           ),
           const SizedBox(height: 20),
-          if (lesson.number == 6)
+          if (lesson.number == 1)
+            const FirstLesson()
+          else if (lesson.number == 6)
             const ValveLesson()
           else
             const Card(
@@ -339,6 +339,408 @@ class LessonPage extends StatelessWidget {
     );
   }
 }
+
+// درس اول: مبانی پایپینگ
+
+class FirstLesson extends StatelessWidget {
+  const FirstLesson({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _section(
+          '۱. پایپینگ چیست؟',
+          'پایپینگ (Piping) به مجموعه‌ای از لوله‌ها، اتصالات، '
+          'شیرآلات و تجهیزات جانبی گفته می‌شود که برای انتقال '
+          'سیالات از یک نقطه به نقطه دیگر در یک واحد صنعتی استفاده می‌شوند.\n\n'
+          'سیال می‌تواند مایع، گاز، بخار یا مخلوطی از چند ماده باشد. '
+          'وظیفه سیستم پایپینگ فقط انتقال سیال نیست؛ بلکه باید شرایط '
+          'مناسب فشار، دما، دبی، ایمنی و قابلیت بهره‌برداری را نیز فراهم کند.',
+        ),
+        _section(
+          '۲. پایپینگ در چه صنایعی استفاده می‌شود؟',
+          'سیستم‌های پایپینگ در بسیاری از صنایع نقش اساسی دارند:',
+          bullets: const [
+            'نفت و گاز: انتقال نفت خام، گاز طبیعی و محصولات پالایشگاهی',
+            'پالایشگاه‌ها: ارتباط بین واحدهای فرآیندی و مخازن',
+            'پتروشیمی: انتقال مواد اولیه، محصولات و مواد شیمیایی',
+            'نیروگاه‌ها: انتقال آب، بخار و سوخت',
+            'صنایع غذایی: انتقال مواد مایع و محلول‌های فرآیندی',
+            'صنایع دارویی: انتقال سیالات با الزامات بهداشتی',
+            'کارخانه‌ها: خطوط آب خنک‌کننده، هوای فشرده و بخار',
+          ],
+        ),
+        _section(
+          '۳. اجزای اصلی یک سیستم پایپینگ',
+          'یک خط لوله صنعتی از اجزای مختلفی تشکیل می‌شود. '
+          'هر جزء وظیفه مشخصی دارد و انتخاب صحیح آن برای عملکرد '
+          'ایمن سیستم ضروری است.',
+          bullets: const [
+            'Pipe: لوله؛ مسیر اصلی عبور سیال',
+            'Elbow: زانویی؛ تغییر جهت مسیر لوله',
+            'Tee: سه‌راهی؛ ایجاد انشعاب از خط اصلی',
+            'Reducer: تبدیل؛ تغییر قطر لوله',
+            'Flange: فلنج؛ اتصال قابل بازشدن بین اجزا',
+            'Gasket: گسکت؛ آب‌بندی محل اتصال فلنجی',
+            'Valve: شیر؛ قطع، وصل یا کنترل جریان',
+            'Pipe Support: تکیه‌گاه؛ نگهداری وزن لوله و تجهیزات',
+          ],
+        ),
+        _section(
+          '۴. مسیر حرکت سیال در یک واحد صنعتی',
+          'برای درک بهتر پایپینگ، یک سیستم ساده انتقال آب را در نظر بگیرید.\n\n'
+          'آب از مخزن خارج می‌شود، از طریق لوله به پمپ می‌رسد، '
+          'پس از افزایش فشار توسط پمپ از شیرها و مسیر لوله عبور می‌کند '
+          'و در نهایت به مصرف‌کننده یا مخزن مقصد می‌رسد.',
+        ),
+        const FlowDiagram(),
+        _section(
+          '۵. اصطلاحات پایه در پایپینگ',
+          'در نقشه‌ها و مدارک مهندسی، اصطلاحات زیر بسیار پرکاربرد هستند:',
+          bullets: const [
+            'Flow: جریان سیال در داخل لوله',
+            'Pressure: فشار سیال',
+            'Temperature: دمای سیال',
+            'Flow Rate: مقدار سیال عبوری در واحد زمان',
+            'Diameter: قطر لوله',
+            'Wall Thickness: ضخامت جداره لوله',
+            'Material: جنس یا متریال قطعه',
+            'Design Pressure: فشار طراحی',
+            'Design Temperature: دمای طراحی',
+            'Operating Condition: شرایط واقعی بهره‌برداری',
+          ],
+        ),
+        _section(
+          '۶. تفاوت طراحی و شرایط عملیاتی',
+          'شرایط عملیاتی (Operating Conditions) به فشار و دمایی گفته '
+          'می‌شود که سیستم در زمان کارکرد عادی تجربه می‌کند.\n\n'
+          'شرایط طراحی (Design Conditions) مبنای طراحی مکانیکی سیستم است '
+          'و معمولاً با در نظر گرفتن حاشیه ایمنی و الزامات استاندارد '
+          'تعیین می‌شود.\n\n'
+          'بنابراین فشار و دمای طراحی الزاماً با فشار و دمای عادی '
+          'بهره‌برداری یکسان نیستند.',
+        ),
+        _section(
+          '۷. مثال کاربردی صنعتی',
+          'فرض کنید قرار است آب از یک مخزن ذخیره به یک مبدل حرارتی منتقل شود.\n\n'
+          'برای طراحی اولیه این مسیر، مهندس پایپینگ باید اطلاعاتی مانند '
+          'دبی آب، فشار و دمای کارکرد، فاصله مخزن تا مبدل، قطر موردنیاز '
+          'لوله، جنس لوله و نوع اتصالات را بررسی کند.\n\n'
+          'همچنین باید محل نصب شیرهای قطع و وصل، مسیر عبور لوله، '
+          'تکیه‌گاه‌ها و امکان تعمیرات آینده در نظر گرفته شود.',
+        ),
+        const ExampleCard(),
+        _section(
+          '۸. وظایف مهندس پایپینگ',
+          'مهندس پایپینگ در مراحل مختلف یک پروژه صنعتی با رشته‌های '
+          'فرآیند، مکانیک، سازه، ابزار دقیق و برق همکاری می‌کند.',
+          bullets: const [
+            'بررسی مدارک فرآیندی و اطلاعات طراحی',
+            'مطالعه نقشه‌های P&ID',
+            'تعیین مسیر مناسب عبور لوله‌ها',
+            'انتخاب لوله، اتصالات، شیرآلات و متریال',
+            'بررسی کلاس لوله‌کشی و مشخصات فنی',
+            'تهیه و بررسی نقشه‌های ایزومتریک',
+            'بررسی تکیه‌گاه‌ها و محدودیت‌های نصب',
+            'تهیه مقادیر موردنیاز و فهرست متریال (MTO)',
+            'همکاری با واحدهای نصب، بازرسی و کنترل کیفیت',
+          ],
+        ),
+        _section(
+          '۹. نکات مهم این درس',
+          '۱. پایپینگ فقط لوله نیست؛ مجموعه‌ای از اجزا و الزامات فنی است.\n\n'
+          '۲. انتخاب متریال به نوع سیال، فشار، دما و شرایط محیطی وابسته است.\n\n'
+          '۳. مسیر لوله باید از نظر ایمنی، بهره‌برداری و تعمیرات بررسی شود.\n\n'
+          '۴. نقشه‌ها و استانداردها مبنای تصمیم‌گیری مهندس پایپینگ هستند.',
+        ),
+        const LessonQuiz(),
+      ],
+    );
+  }
+
+  static Widget _section(
+    String title,
+    String description, {
+    List<String> bullets = const [],
+  }) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AppText(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF07569A),
+              ),
+            ),
+            const SizedBox(height: 10),
+            AppText(
+              description,
+              style: const TextStyle(fontSize: 15, height: 1.9),
+            ),
+            if (bullets.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              ...bullets.map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 9),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 7),
+                        child: Icon(
+                          Icons.circle,
+                          size: 7,
+                          color: Color(0xFF07569A),
+                        ),
+                      ),
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: AppText(
+                          item,
+                          style: const TextStyle(fontSize: 14, height: 1.8),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class FlowDiagram extends StatelessWidget {
+  const FlowDiagram({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      ('مخزن آب', Icons.water_drop),
+      ('پمپ', Icons.settings),
+      ('شیرآلات', Icons.tune),
+      ('خط لوله', Icons.linear_scale),
+      ('مبدل حرارتی', Icons.device_thermostat),
+    ];
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            const AppText(
+              'نمای ساده مسیر انتقال سیال',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 15),
+            ...items.asMap().entries.map((entry) {
+              return Column(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(13),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEAF3FC),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          entry.value.$2,
+                          color: const Color(0xFF07569A),
+                        ),
+                        const SizedBox(width: 10),
+                        AppText(
+                          entry.value.$1,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (entry.key != items.length - 1)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 5),
+                      child: Icon(
+                        Icons.arrow_downward,
+                        color: Color(0xFF07569A),
+                        size: 25,
+                      ),
+                    ),
+                ],
+              );
+            }),
+            const SizedBox(height: 8),
+            const AppText(
+              'این شکل فقط مسیر مفهومی جریان را نشان می‌دهد و نقشه اجرایی نیست.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: Colors.blueGrey),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ExampleCard extends StatelessWidget {
+  const ExampleCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      color: const Color(0xFFF1F6FB),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            AppText(
+              'نمونه بررسی اولیه خط انتقال آب',
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 12),
+            AppText('اطلاعات فرضی مسئله:', style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 8),
+            AppText('سیال: آب'),
+            AppText('مبدأ: مخزن ذخیره'),
+            AppText('مقصد: مبدل حرارتی'),
+            AppText('دبی موردنیاز: ۲۰ مترمکعب بر ساعت'),
+            AppText('فشار و دمای طراحی: باید از مدارک پروژه دریافت شود.'),
+            SizedBox(height: 12),
+            AppText(
+              'مهندس پایپینگ با این اطلاعات به‌تنهایی نمی‌تواند قطر نهایی '
+              'لوله را تعیین کند. ابتدا باید سرعت مجاز سیال، افت فشار، '
+              'طول مسیر، اختلاف ارتفاع و مشخصات تجهیزات بررسی شوند.',
+              style: TextStyle(height: 1.9),
+            ),
+            SizedBox(height: 10),
+            AppText(
+              'نتیجه: انتخاب قطر لوله یک تصمیم مهندسی است و صرفاً با حدس '
+              'یا مشاهده قطر اتصالات انجام نمی‌شود.',
+              style: TextStyle(fontWeight: FontWeight.bold, height: 1.8),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class LessonQuiz extends StatefulWidget {
+  const LessonQuiz({super.key});
+
+  @override
+  State<LessonQuiz> createState() => _LessonQuizState();
+}
+
+class _LessonQuizState extends State<LessonQuiz> {
+  int? selectedAnswer;
+  bool submitted = false;
+
+  final List<String> answers = const [
+    'فقط برای نگهداری لوله‌ها',
+    'برای انتقال و کنترل سیالات در سیستم صنعتی',
+    'فقط برای افزایش فشار سیال',
+    'فقط برای اتصال مخازن',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 20),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const AppText(
+              'آزمون کوتاه درس اول',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            const AppText(
+              'وظیفه اصلی یک سیستم پایپینگ چیست؟',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            ...List.generate(answers.length, (index) {
+              return RadioListTile<int>(
+                value: index,
+                groupValue: selectedAnswer,
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                title: AppText(
+                  answers[index],
+                  style: const TextStyle(fontSize: 14),
+                ),
+                onChanged: submitted
+                    ? null
+                    : (value) {
+                        setState(() {
+                          selectedAnswer = value;
+                        });
+                      },
+              );
+            }),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: selectedAnswer == null || submitted
+                    ? null
+                    : () {
+                        setState(() {
+                          submitted = true;
+                        });
+                      },
+                child: const AppText('ثبت پاسخ'),
+              ),
+            ),
+            if (submitted) ...[
+              const SizedBox(height: 12),
+              AppText(
+                selectedAnswer == 1
+                    ? 'آفرین! پاسخ صحیح است.'
+                    : 'پاسخ صحیح گزینه دوم است. هدف اصلی پایپینگ انتقال و کنترل سیالات است.',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: selectedAnswer == 1 ? Colors.green : Colors.red,
+                  height: 1.8,
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    selectedAnswer = null;
+                    submitted = false;
+                  });
+                },
+                child: const AppText('تکرار آزمون'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// درس ششم: شیرآلات صنعتی
 
 class ValveLesson extends StatelessWidget {
   const ValveLesson({super.key});
