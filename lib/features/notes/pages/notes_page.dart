@@ -69,7 +69,6 @@ class _NotesPageState extends State<NotesPage> {
 
   void _onSearchChanged(String value) {
     _searchQuery = value;
-
     _searchTimer?.cancel();
 
     _searchTimer = Timer(
@@ -83,80 +82,13 @@ class _NotesPageState extends State<NotesPage> {
   }
 
   Future<void> _showNoteEditor({NoteModel? note}) async {
-    final titleController = TextEditingController(
-      text: note?.title ?? '',
+    final result = await showDialog<Map<String, String>>(
+      context: context,
+      useRootNavigator: true,
+      builder: (_) => NoteEditorDialog(note: note),
     );
 
-    final contentController = TextEditingController(
-      text: note?.content ?? '',
-    );
-
-    Map<String, String>? result;
-
-    try {
-      result = await showDialog<Map<String, String>>(
-        context: context,
-        builder: (dialogContext) {
-          return AlertDialog(
-            title: Text(
-              note == null ? 'یادداشت جدید' : 'ویرایش یادداشت',
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: titleController,
-                    decoration: const InputDecoration(
-                      labelText: 'عنوان یادداشت',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: contentController,
-                    minLines: 4,
-                    maxLines: 8,
-                    decoration: const InputDecoration(
-                      labelText: 'متن یادداشت',
-                      alignLabelWithHint: true,
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('انصراف'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  final title = titleController.text.trim();
-                  final content = contentController.text.trim();
-
-                  if (title.isEmpty || content.isEmpty) {
-                    return;
-                  }
-
-                  Navigator.pop(dialogContext, {
-                    'title': title,
-                    'content': content,
-                  });
-                },
-                child: const Text('ذخیره'),
-              ),
-            ],
-          );
-        },
-      );
-    } finally {
-      titleController.dispose();
-      contentController.dispose();
-    }
-
-    if (result == null || !mounted) return;
+    if (!mounted || result == null) return;
 
     try {
       if (note == null) {
@@ -183,11 +115,8 @@ class _NotesPageState extends State<NotesPage> {
       if (!mounted) return;
 
       await _loadNotes();
-
-      // پیام موفقیت موقتاً برای آزمایش حذف شده است.
     } catch (error) {
       if (!mounted) return;
-
       _showMessage('خطا در ذخیره یادداشت: $error');
     }
   }
@@ -231,7 +160,6 @@ class _NotesPageState extends State<NotesPage> {
       _showMessage('یادداشت حذف شد.');
     } catch (error) {
       if (!mounted) return;
-
       _showMessage('خطا در حذف یادداشت: $error');
     }
   }
@@ -338,6 +266,105 @@ class _NotesPageState extends State<NotesPage> {
         onPressed: () => _showNoteEditor(),
         child: const Icon(Icons.add),
       ),
+    );
+  }
+}
+
+class NoteEditorDialog extends StatefulWidget {
+  final NoteModel? note;
+
+  const NoteEditorDialog({
+    super.key,
+    this.note,
+  });
+
+  @override
+  State<NoteEditorDialog> createState() =>
+      _NoteEditorDialogState();
+}
+
+class _NoteEditorDialogState extends State<NoteEditorDialog> {
+  late final TextEditingController _titleController;
+  late final TextEditingController _contentController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _titleController = TextEditingController(
+      text: widget.note?.title ?? '',
+    );
+
+    _contentController = TextEditingController(
+      text: widget.note?.content ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _contentController.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final title = _titleController.text.trim();
+    final content = _contentController.text.trim();
+
+    if (title.isEmpty || content.isEmpty) {
+      return;
+    }
+
+    Navigator.of(context, rootNavigator: true).pop({
+      'title': title,
+      'content': content,
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(
+        widget.note == null ? 'یادداشت جدید' : 'ویرایش یادداشت',
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _titleController,
+              decoration: const InputDecoration(
+                labelText: 'عنوان یادداشت',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _contentController,
+              minLines: 4,
+              maxLines: 8,
+              decoration: const InputDecoration(
+                labelText: 'متن یادداشت',
+                alignLabelWithHint: true,
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(
+            context,
+            rootNavigator: true,
+          ).pop(),
+          child: const Text('انصراف'),
+        ),
+        ElevatedButton(
+          onPressed: _save,
+          child: const Text('ذخیره'),
+        ),
+      ],
     );
   }
 }
