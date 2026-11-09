@@ -1,3 +1,4 @@
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -20,6 +21,9 @@ class _NotesPageState extends State<NotesPage> {
   bool _isLoading = true;
   String _searchQuery = '';
 
+  Timer? _searchTimer;
+  int _loadRequestId = 0;
+
   @override
   void initState() {
     super.initState();
@@ -28,26 +32,31 @@ class _NotesPageState extends State<NotesPage> {
 
   @override
   void dispose() {
+    _searchTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
   Future<void> _loadNotes() async {
-    setState(() {
-      _isLoading = true;
-    });
+    final requestId = ++_loadRequestId;
+
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       final result = await _repository.searchNotes(_searchQuery);
 
-      if (!mounted) return;
+      if (!mounted || requestId != _loadRequestId) return;
 
       setState(() {
         _notes = result;
         _isLoading = false;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || requestId != _loadRequestId) return;
 
       setState(() {
         _isLoading = false;
@@ -55,6 +64,21 @@ class _NotesPageState extends State<NotesPage> {
 
       _showMessage('خطا در دریافت یادداشت‌ها: $error');
     }
+  }
+
+  void _onSearchChanged(String value) {
+    _searchQuery = value;
+
+    _searchTimer?.cancel();
+
+    _searchTimer = Timer(
+      const Duration(milliseconds: 400),
+      () {
+        if (mounted) {
+          _loadNotes();
+        }
+      },
+    );
   }
 
   Future<void> _showNoteEditor({NoteModel? note}) async {
@@ -66,68 +90,72 @@ class _NotesPageState extends State<NotesPage> {
       text: note?.content ?? '',
     );
 
-    final result = await showDialog<Map<String, String>>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(
-            note == null ? 'یادداشت جدید' : 'ویرایش یادداشت',
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(
-                    labelText: 'عنوان یادداشت',
-                    border: OutlineInputBorder(),
+    Map<String, String>? result;
+
+    try {
+      result = await showDialog<Map<String, String>>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: Text(
+              note == null ? 'یادداشت جدید' : 'ویرایش یادداشت',
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(
+                      labelText: 'عنوان یادداشت',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: contentController,
-                  minLines: 4,
-                  maxLines: 8,
-                  decoration: const InputDecoration(
-                    labelText: 'متن یادداشت',
-                    alignLabelWithHint: true,
-                    border: OutlineInputBorder(),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: contentController,
+                    minLines: 4,
+                    maxLines: 8,
+                    decoration: const InputDecoration(
+                      labelText: 'متن یادداشت',
+                      alignLabelWithHint: true,
+                      border: OutlineInputBorder(),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('انصراف'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final title = titleController.text.trim();
-                final content = contentController.text.trim();
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('انصراف'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final title = titleController.text.trim();
+                  final content = contentController.text.trim();
 
-                if (title.isEmpty || content.isEmpty) {
-                  return;
-                }
+                  if (title.isEmpty || content.isEmpty) {
+                    return;
+                  }
 
-                Navigator.pop(dialogContext, {
-                  'title': title,
-                  'content': content,
-                });
-              },
-              child: const Text('ذخیره'),
-            ),
-          ],
-        );
-      },
-    );
+                  Navigator.pop(dialogContext, {
+                    'title': title,
+                    'content': content,
+                  });
+                },
+                child: const Text('ذخیره'),
+              ),
+            ],
+          );
+        },
+      );
+    } finally {
+      titleController.dispose();
+      contentController.dispose();
+    }
 
-    titleController.dispose();
-    contentController.dispose();
-
-    if (result == null) return;
+    if (result == null || !mounted) return;
 
     try {
       if (note == null) {
@@ -154,8 +182,13 @@ class _NotesPageState extends State<NotesPage> {
       if (!mounted) return;
 
       await _loadNotes();
+
+      if (!mounted) return;
+
       _showMessage('یادداشت ذخیره شد.');
     } catch (error) {
+      if (!mounted) return;
+
       _showMessage('خطا در ذخیره یادداشت: $error');
     }
   }
@@ -185,7 +218,7 @@ class _NotesPageState extends State<NotesPage> {
       },
     );
 
-    if (confirmed != true) return;
+    if (confirmed != true || !mounted) return;
 
     try {
       await _repository.deleteNote(note.id!);
@@ -193,8 +226,13 @@ class _NotesPageState extends State<NotesPage> {
       if (!mounted) return;
 
       await _loadNotes();
+
+      if (!mounted) return;
+
       _showMessage('یادداشت حذف شد.');
     } catch (error) {
+      if (!mounted) return;
+
       _showMessage('خطا در حذف یادداشت: $error');
     }
   }
@@ -225,6 +263,7 @@ class _NotesPageState extends State<NotesPage> {
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear),
                   onPressed: () {
+                    _searchTimer?.cancel();
                     _searchController.clear();
                     _searchQuery = '';
                     _loadNotes();
@@ -234,10 +273,7 @@ class _NotesPageState extends State<NotesPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              onChanged: (value) {
-                _searchQuery = value;
-                _loadNotes();
-              },
+              onChanged: _onSearchChanged,
             ),
           ),
           Expanded(
