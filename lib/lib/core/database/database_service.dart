@@ -1,4 +1,3 @@
-
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -21,6 +20,9 @@ class DatabaseService {
     _database = await openDatabase(
       path,
       version: databaseVersion,
+      onConfigure: (db) async {
+        await db.execute('PRAGMA foreign_keys = ON');
+      },
       onCreate: _createDatabase,
       onUpgrade: _upgradeDatabase,
     );
@@ -77,8 +79,7 @@ class DatabaseService {
     int oldVersion,
     int newVersion,
   ) async {
-    // تغییرات ساختار پایگاه داده در نسخه‌های آینده
-    // به‌صورت مرحله‌ای در این قسمت اضافه می‌شوند.
+    // Database migrations will be added here.
   }
 
   Future<int> addNote({
