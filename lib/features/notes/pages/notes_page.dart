@@ -1,3 +1,4 @@
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -183,9 +184,7 @@ class _NotesPageState extends State<NotesPage> {
 
       await _loadNotes();
 
-      if (!mounted) return;
-
-      _showMessage('یادداشت ذخیره شد.');
+      // پیام موفقیت موقتاً برای آزمایش حذف شده است.
     } catch (error) {
       if (!mounted) return;
 
