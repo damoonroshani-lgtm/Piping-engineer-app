@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:piping_engineer/core/theme/app_theme.dart';
+import 'package:piping_engineer/features/notes/pages/notes_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -115,6 +116,16 @@ class HomePage extends StatelessWidget {
             () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const LessonsPage()),
+            ),
+          ),
+          _menuCard(
+            context,
+            'یادداشت‌های من',
+            'ثبت، جست‌وجو، ویرایش و مدیریت یادداشت‌ها',
+            Icons.note_alt,
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NotesPage()),
             ),
           ),
           _menuCard(
