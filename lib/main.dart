@@ -7,6 +7,7 @@ import 'package:piping_engineer/core/theme/app_theme.dart';
 import 'package:piping_engineer/core/diagnostics/error_logger.dart';
 import 'package:piping_engineer/core/diagnostics/error_log_page.dart';
 import 'package:piping_engineer/features/notes/pages/notes_page.dart';
+import 'package:piping_engineer/core/widgets/app_text.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,10 +51,13 @@ class PipingApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Piping Engineering',
       theme: AppTheme.lightTheme,
-      home: const Directionality(
-        textDirection: TextDirection.rtl,
-        child: HomePage(),
-      ),
+      builder: (context, child) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
+      home: const HomePage(),
     );
   }
 }
@@ -97,7 +101,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: const AppText(
           'Piping Engineering',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
@@ -119,7 +123,7 @@ class HomePage extends StatelessWidget {
               children: [
                 Icon(Icons.engineering, color: Colors.white, size: 42),
                 SizedBox(height: 12),
-                Text(
+                AppText(
                   'آموزش جامع مهندسی پایپینگ',
                   style: TextStyle(
                     color: Colors.white,
@@ -128,7 +132,7 @@ class HomePage extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 8),
-                Text(
+                AppText(
                   'از مبانی تا طراحی و کاربردهای صنعتی',
                   style: TextStyle(color: Colors.white70, fontSize: 14),
                 ),
@@ -136,7 +140,7 @@ class HomePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 22),
-          const Text(
+          const AppText(
             'بخش‌های اصلی برنامه',
             style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
           ),
@@ -199,12 +203,12 @@ class HomePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  AppText(
                     'هدف آموزشی ما',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
                   ),
                   SizedBox(height: 8),
-                  Text(
+                  AppText(
                     'یادگیری مفاهیم مهندسی با تصاویر واضح، '
                     'مثال‌های واقعی، توضیحات کامل و تمرین‌های کاربردی.',
                     style: TextStyle(fontSize: 14, height: 1.8),
@@ -233,8 +237,11 @@ class HomePage extends StatelessWidget {
           backgroundColor: const Color(0xFFE0EDFA),
           child: Icon(icon, color: const Color(0xFF07569A)),
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(subtitle),
+        title: AppText(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: AppText(subtitle),
         trailing: const Icon(Icons.arrow_back_ios_new, size: 17),
         onTap: action,
       ),
@@ -243,7 +250,7 @@ class HomePage extends StatelessWidget {
 
   void _showMessage(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(content: AppText(message)),
     );
   }
 }
@@ -254,7 +261,7 @@ class LessonsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('دوره جامع آموزشی')),
+      appBar: AppBar(title: const AppText('دوره جامع آموزشی')),
       body: ListView.builder(
         padding: const EdgeInsets.all(12),
         itemCount: lessons.length,
@@ -269,11 +276,11 @@ class LessonsPage extends StatelessWidget {
                 backgroundColor: const Color(0xFFE0EDFA),
                 child: Icon(lesson.icon, color: const Color(0xFF07569A)),
               ),
-              title: Text(
+              title: AppText(
                 'درس ${lesson.number}: ${lesson.title}',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              subtitle: Text(lesson.subtitle),
+              subtitle: AppText(lesson.subtitle),
               trailing: const Icon(Icons.arrow_back_ios, size: 17),
               onTap: () {
                 Navigator.push(
@@ -299,16 +306,19 @@ class LessonPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('درس ${lesson.number}')),
+      appBar: AppBar(title: AppText('درس ${lesson.number}')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(
+          AppText(
             lesson.title,
             style: const TextStyle(fontSize: 23, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          Text(lesson.subtitle, style: const TextStyle(color: Colors.blueGrey)),
+          AppText(
+            lesson.subtitle,
+            style: const TextStyle(color: Colors.blueGrey),
+          ),
           const SizedBox(height: 20),
           if (lesson.number == 6)
             const ValveLesson()
@@ -316,7 +326,7 @@ class LessonPage extends StatelessWidget {
             const Card(
               child: Padding(
                 padding: EdgeInsets.all(18),
-                child: Text(
+                child: AppText(
                   'محتوای کامل این درس در مرحله آماده‌سازی است. '
                   'در نسخه آموزشی نهایی، توضیحات، تصاویر فنی، '
                   'مثال‌های صنعتی و آزمون اختصاصی اضافه خواهند شد.',
@@ -338,19 +348,19 @@ class ValveLesson extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        const AppText(
           'آشنایی با شیرآلات صنعتی',
           style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
-        const Text(
+        const AppText(
           'شیر صنعتی وسیله‌ای مکانیکی برای کنترل جریان سیال '
           'در خطوط لوله است. بسته به نوع طراحی، شیر می‌تواند '
           'جریان را قطع کند، وصل کند، تنظیم کند یا از برگشت آن جلوگیری کند.',
           style: TextStyle(fontSize: 15, height: 1.9),
         ),
         const SizedBox(height: 20),
-        const Text(
+        const AppText(
           'انواع اصلی شیرآلات',
           style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
         ),
@@ -361,7 +371,7 @@ class ValveLesson extends StatelessWidget {
         _valve('Butterfly Valve', 'شیر پروانه‌ای', 'کنترل و قطع جریان'),
         _valve('Check Valve', 'شیر یک‌طرفه', 'جلوگیری از برگشت جریان'),
         const SizedBox(height: 20),
-        const Text(
+        const AppText(
           'ساختمان شیر کشویی',
           style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
         ),
@@ -372,7 +382,7 @@ class ValveLesson extends StatelessWidget {
             child: Column(
               children: [
                 Icon(Icons.settings, size: 85, color: Color(0xFF07569A)),
-                Text(
+                AppText(
                   'تصویر فنی برش‌خورده شیر کشویی در مرحله بعد اضافه می‌شود.',
                   textAlign: TextAlign.center,
                 ),
@@ -381,14 +391,14 @@ class ValveLesson extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        const Text(
+        const AppText(
           'نکته مهندسی',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const Card(
           child: Padding(
             padding: EdgeInsets.all(16),
-            child: Text(
+            child: AppText(
               'شیر کشویی معمولاً برای قطع و وصل کامل جریان استفاده می‌شود '
               'و برای تنظیم مداوم دبی در حالت نیمه‌باز مناسب نیست.',
               style: TextStyle(height: 1.9),
@@ -403,8 +413,11 @@ class ValveLesson extends StatelessWidget {
     return Card(
       child: ListTile(
         leading: const Icon(Icons.settings, color: Color(0xFF07569A)),
-        title: Text(english, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text('$persian — $use'),
+        title: AppText(
+          english,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: AppText('$persian — $use'),
       ),
     );
   }
