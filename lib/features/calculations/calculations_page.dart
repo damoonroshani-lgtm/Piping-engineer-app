@@ -1,4 +1,5 @@
 
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -9,27 +10,35 @@ class CalculationsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
+    return const Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text(
-            'محاسبات مهندسی پایپینگ',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
-          centerTitle: true,
-        ),
-        body: ListView(
-          padding: const EdgeInsets.all(16),
-          children: const [
-            PipeSizingCalculator(),
-          ],
-        ),
+        appBar: _CalculationsAppBar(),
+        body: PipeSizingCalculator(),
       ),
     );
   }
+}
+
+class _CalculationsAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
+  const _CalculationsAppBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      title: const Text(
+        'محاسبات مهندسی پایپینگ',
+        style: TextStyle(fontWeight: FontWeight.bold),
+      ),
+      backgroundColor: const Color(0xFF07569A),
+      foregroundColor: Colors.white,
+      centerTitle: true,
+    );
+  }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
 
 class PipeSizingCalculator extends StatefulWidget {
@@ -51,8 +60,6 @@ class _PipeSizingCalculatorState extends State<PipeSizingCalculator> {
 
   double? _diameterMm;
   double? _diameterInch;
-  double? _actualVelocity;
-
   String? _errorMessage;
 
   @override
@@ -70,32 +77,26 @@ class _PipeSizingCalculatorState extends State<PipeSizingCalculator> {
     final flow = _parseNumber(_flowController.text);
     final velocity = _parseNumber(_velocityController.text);
 
-    if (flow == null || velocity == null ||
-        flow <= 0 || velocity <= 0) {
+    if (flow == null ||
+        velocity == null ||
+        flow <= 0 ||
+        velocity <= 0) {
       setState(() {
-        _errorMessage =
-            'لطفاً دبی و سرعت را به‌صورت عددی بزرگ‌تر از صفر وارد کنید.';
+        _errorMessage = 'لطفاً مقادیر معتبر و بزرگ‌تر از صفر وارد کنید.';
         _diameterMm = null;
         _diameterInch = null;
-        _actualVelocity = null;
       });
       return;
     }
 
-    // Q: m3/h  ->  m3/s
-    // D = sqrt(4Q / (pi * V))
     final flowM3PerSecond = flow / 3600;
     final diameterMeter =
-        (4 * flowM3PerSecond / (3.141592653589793 * velocity))
-            .sqrt();
-
-    final diameterMm = diameterMeter * 1000;
+        math.sqrt(4 * flowM3PerSecond / (math.pi * velocity));
 
     setState(() {
       _errorMessage = null;
-      _diameterMm = diameterMm;
-      _diameterInch = diameterMm / 25.4;
-      _actualVelocity = velocity;
+      _diameterMm = diameterMeter * 1000;
+      _diameterInch = diameterMeter * 1000 / 25.4;
     });
   }
 
@@ -106,55 +107,11 @@ class _PipeSizingCalculatorState extends State<PipeSizingCalculator> {
     setState(() {
       _diameterMm = null;
       _diameterInch = null;
-      _actualVelocity = null;
       _errorMessage = null;
     });
   }
 
-  Widget _inputField({
-    required String label,
-    required String unit,
-    required TextEditingController controller,
-    required String hint,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(
-            decimal: true,
-          ),
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(
-              RegExp(r'[0-9.,]'),
-            ),
-          ],
-          decoration: InputDecoration(
-            hintText: hint,
-            suffixText: unit,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 14,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _sectionCard({
+  Widget _card({
     required String title,
     required Widget child,
     IconData icon = Icons.menu_book,
@@ -193,65 +150,40 @@ class _PipeSizingCalculatorState extends State<PipeSizingCalculator> {
     );
   }
 
-  Widget _resultBox() {
-    if (_diameterMm == null) {
-      return const SizedBox.shrink();
-    }
-
-    return _sectionCard(
-      title: 'نتیجه محاسبه',
-      icon: Icons.check_circle_outline,
-      child: Column(
-        children: [
-          const Text(
-            'قطر داخلی تئوری موردنیاز',
-            style: TextStyle(fontSize: 14),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${_diameterMm!.toStringAsFixed(2)} mm',
-            textDirection: TextDirection.ltr,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: primaryColor,
+  Widget _inputField({
+    required String label,
+    required String unit,
+    required TextEditingController controller,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          keyboardType:
+              const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+          ],
+          decoration: InputDecoration(
+            suffixText: unit,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            '${_diameterInch!.toStringAsFixed(3)} inch',
-            textDirection: TextDirection.ltr,
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const Divider(height: 28),
-          _resultRow(
-            'دبی ورودی',
-            '${_flowController.text} m³/h',
-          ),
-          _resultRow(
-            'سرعت مبنا',
-            '${_actualVelocity!.toStringAsFixed(2)} m/s',
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'این مقدار قطر داخلی محاسباتی است، نه سایز اسمی نهایی لوله.',
-            style: TextStyle(
-              color: Colors.orange,
-              fontWeight: FontWeight.bold,
-              height: 1.8,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _resultRow(String title, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -266,10 +198,50 @@ class _PipeSizingCalculatorState extends State<PipeSizingCalculator> {
     );
   }
 
+  Widget _liveResult() {
+    if (_diameterMm == null) return const SizedBox.shrink();
+
+    return _card(
+      title: 'نتیجه محاسبه ورودی شما',
+      icon: Icons.check_circle_outline,
+      child: Column(
+        children: [
+          const Text('قطر داخلی تئوری موردنیاز'),
+          const SizedBox(height: 8),
+          Text(
+            '${_diameterMm!.toStringAsFixed(2)} mm',
+            textDirection: TextDirection.ltr,
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: primaryColor,
+            ),
+          ),
+          Text(
+            '${_diameterInch!.toStringAsFixed(3)} inch',
+            textDirection: TextDirection.ltr,
+          ),
+          const Divider(height: 28),
+          _resultRow('دبی ورودی', '${_flowController.text} m³/h'),
+          _resultRow('سرعت ورودی', '${_velocityController.text} m/s'),
+          const SizedBox(height: 8),
+          const Text(
+            'این مقدار قطر داخلی تئوری است و سایز اسمی نهایی لوله نیست.',
+            style: TextStyle(
+              color: Colors.orange,
+              fontWeight: FontWeight.bold,
+              height: 1.8,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return ListView(
+      padding: const EdgeInsets.all(16),
       children: [
         Container(
           padding: const EdgeInsets.all(18),
@@ -290,43 +262,36 @@ class _PipeSizingCalculatorState extends State<PipeSizingCalculator> {
               ),
               SizedBox(height: 6),
               Text(
-                'Pipe Sizing Calculator',
+                'Pipe Sizing',
                 textDirection: TextDirection.ltr,
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 15,
-                ),
+                style: TextStyle(color: Colors.white70),
               ),
               SizedBox(height: 12),
               Text(
                 'محاسبه قطر داخلی اولیه لوله بر اساس دبی حجمی و سرعت طراحی سیال.',
-                style: TextStyle(
-                  color: Colors.white,
-                  height: 1.8,
-                ),
+                style: TextStyle(color: Colors.white, height: 1.8),
               ),
             ],
           ),
         ),
+
         const SizedBox(height: 16),
 
-        _sectionCard(
-          title: 'اطلاعات ورودی',
-          icon: Icons.input,
+        _card(
+          title: 'ماشین‌حساب سایز لوله',
+          icon: Icons.calculate,
           child: Column(
             children: [
               _inputField(
                 label: 'دبی حجمی سیال (Flow Rate)',
                 unit: 'm³/h',
                 controller: _flowController,
-                hint: 'مثلاً 50',
               ),
               const SizedBox(height: 18),
               _inputField(
                 label: 'سرعت طراحی سیال (Velocity)',
                 unit: 'm/s',
                 controller: _velocityController,
-                hint: 'مثلاً 2',
               ),
               const SizedBox(height: 18),
               SizedBox(
@@ -339,37 +304,141 @@ class _PipeSizingCalculatorState extends State<PipeSizingCalculator> {
                     backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
               OutlinedButton.icon(
                 onPressed: _reset,
                 icon: const Icon(Icons.refresh),
-                label: const Text('بازنشانی مقادیر'),
+                label: const Text('بازنشانی'),
               ),
-              if (_errorMessage != null) ...[
-                const SizedBox(height: 12),
+              if (_errorMessage != null)
                 Text(
                   _errorMessage!,
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(color: Colors.red),
                 ),
-              ],
             ],
           ),
         ),
 
-        _resultBox(),
+        _liveResult(),
 
-        _sectionCard(
-          title: 'فرمول محاسباتی',
+        _card(
+          title: 'مثال عددی: انتقال مایع در یک خط لوله',
+          icon: Icons.assignment,
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'صورت مسئله',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'یک خط لوله وظیفه انتقال مایع با دبی حجمی 50 مترمکعب بر ساعت را دارد. سرعت طراحی سیال 2 متر بر ثانیه در نظر گرفته شده است. قطر داخلی تئوری موردنیاز را محاسبه کنید.',
+                style: TextStyle(height: 1.9),
+              ),
+              Divider(height: 25),
+              Text(
+                'داده‌های مسئله',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Q = 50 m³/h\n'
+                'V = 2 m/s\n'
+                'π = 3.14159',
+                textDirection: TextDirection.ltr,
+                style: TextStyle(height: 1.9),
+              ),
+            ],
+          ),
+        ),
+
+        _card(
+          title: 'حل مثال، مرحله به مرحله',
           icon: Icons.functions,
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'مرحله ۱: تبدیل واحد دبی',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 6),
+              Text(
+                'Q = 50 / 3600\n'
+                'Q = 0.013889 m³/s',
+                textDirection: TextDirection.ltr,
+                style: TextStyle(height: 1.9),
+              ),
+              Divider(height: 22),
+              Text(
+                'مرحله ۲: نوشتن رابطه محاسبه قطر',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 6),
+              Text(
+                'D = √(4Q / πV)',
+                textDirection: TextDirection.ltr,
+                style: TextStyle(
+                  fontSize: 19,
+                  color: primaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Divider(height: 22),
+              Text(
+                'مرحله ۳: جای‌گذاری اعداد',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 6),
+              Text(
+                'D = √[(4 × 0.013889) / (3.14159 × 2)]\n'
+                'D = √0.008842\n'
+                'D = 0.09403 m',
+                textDirection: TextDirection.ltr,
+                style: TextStyle(height: 1.9),
+              ),
+              Divider(height: 22),
+              Text(
+                'مرحله ۴: تبدیل به میلی‌متر',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 6),
+              Text(
+                'D = 0.09403 × 1000\n'
+                'D = 94.03 mm',
+                textDirection: TextDirection.ltr,
+                style: TextStyle(height: 1.9),
+              ),
+              Divider(height: 22),
+              Text(
+                'جواب نهایی مثال',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'قطر داخلی تئوری موردنیاز تقریباً برابر 94.03 میلی‌متر است.',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  height: 1.9,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        _card(
+          title: 'فرمول و معرفی پارامترها',
+          icon: Icons.menu_book,
           child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -382,108 +451,40 @@ class _PipeSizingCalculatorState extends State<PipeSizingCalculator> {
                   color: primaryColor,
                 ),
               ),
-              SizedBox(height: 14),
+              SizedBox(height: 12),
               Text(
-                'D : قطر داخلی لوله بر حسب متر\n'
-                'Q : دبی حجمی بر حسب مترمکعب بر ثانیه\n'
-                'V : سرعت سیال بر حسب متر بر ثانیه\n'
-                'π : عدد پی، تقریباً 3.14159',
+                'D: قطر داخلی لوله بر حسب متر\n'
+                'Q: دبی حجمی بر حسب مترمکعب بر ثانیه\n'
+                'V: سرعت سیال بر حسب متر بر ثانیه\n'
+                'π: عدد پی، تقریباً 3.14159',
                 style: TextStyle(height: 2),
-              ),
-              Divider(height: 24),
-              Text(
-                'اگر دبی بر حسب m³/h باشد، ابتدا باید بر 3600 تقسیم شود تا به m³/s تبدیل گردد.',
-                style: TextStyle(height: 1.8),
               ),
             ],
           ),
         ),
 
-        _sectionCard(
-          title: 'آموزش و نکات مهندسی',
-          icon: Icons.school,
-          child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'هدف محاسبه چیست؟',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 6),
-              Text(
-                'با داشتن دبی و سرعت طراحی، سطح مقطع لازم برای عبور سیال و سپس قطر داخلی تئوری لوله محاسبه می‌شود.',
-                style: TextStyle(height: 1.8),
-              ),
-              SizedBox(height: 14),
-              Text(
-                'مراحل انتخاب سایز واقعی',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 6),
-              Text(
-                '۱. محاسبه قطر داخلی تئوری\n'
-                '۲. انتخاب سایز اسمی نزدیک از استاندارد ابعادی لوله\n'
-                '۳. بررسی قطر داخلی واقعی بر اساس NPS و Schedule\n'
-                '۴. محاسبه مجدد سرعت واقعی سیال\n'
-                '۵. بررسی افت فشار و محدودیت‌های فرآیندی\n'
-                '۶. تأیید نهایی بر اساس مشخصات پروژه و استاندارد مربوطه',
-                style: TextStyle(height: 2),
-              ),
-              SizedBox(height: 14),
-              Text(
-                'نکته مهم',
-                style: TextStyle(
-                  color: Colors.orange,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 6),
-              Text(
-                'قطر محاسبه‌شده به‌تنهایی برای سفارش لوله کافی نیست. فشار، دما، خواص سیال، خوردگی، افت فشار مجاز، نوع سرویس و ضخامت لوله باید بررسی شوند.',
-                style: TextStyle(height: 1.8),
-              ),
-            ],
-          ),
-        ),
-
-        _sectionCard(
-          title: 'مثال کاربردی',
+        _card(
+          title: 'نکات مهم مهندسی و انتخاب سایز واقعی',
           icon: Icons.engineering,
           child: const Text(
-            'فرض کنید دبی یک خط انتقال مایع 50 مترمکعب بر ساعت و سرعت طراحی انتخاب‌شده 2 متر بر ثانیه باشد. با قرار دادن این مقادیر در فرمول، قطر داخلی تئوری به دست می‌آید. سپس باید سایز اسمی و Schedule مناسب انتخاب و سرعت و افت فشار واقعی کنترل شود.',
+            '۱. قطر محاسبه‌شده، قطر داخلی تئوری است.\n'
+            '۲. باید سایز اسمی مناسب از استاندارد ابعادی انتخاب شود.\n'
+            '۳. قطر داخلی واقعی به NPS و Schedule بستگی دارد.\n'
+            '۴. سرعت واقعی سیال با قطر داخلی واقعی دوباره محاسبه شود.\n'
+            '۵. افت فشار خط باید کنترل شود.\n'
+            '۶. فشار، دما، خوردگی، خواص سیال و شرایط فرآیندی باید بررسی شوند.\n\n'
+            'انتخاب نهایی لوله صرفاً با این فرمول انجام نمی‌شود و باید با معیارهای طراحی پروژه و استانداردهای مربوطه تطبیق داده شود.',
             style: TextStyle(height: 1.9),
           ),
         ),
 
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         const Text(
-          'مبنای محاسبه: رابطه پیوستگی جریان برای جریان حجمی در لوله با سطح مقطع دایره‌ای.',
+          'مبنای محاسبه: معادله پیوستگی جریان در مقطع دایره‌ای',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.grey,
-            fontSize: 12,
-            height: 1.8,
-          ),
+          style: TextStyle(color: Colors.grey, fontSize: 12),
         ),
       ],
     );
-  }
-}
-
-extension on double {
-  double sqrt() {
-    if (this < 0) {
-      throw ArgumentError('Cannot calculate square root of negative value');
-    }
-    if (this == 0) return 0;
-
-    double x = this;
-    double result = x;
-
-    for (int i = 0; i < 30; i++) {
-      result = (result + x / result) / 2;
-    }
-
-    return result;
   }
 }
