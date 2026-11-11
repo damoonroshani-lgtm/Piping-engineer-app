@@ -1,3 +1,4 @@
+
 import 'dart:async';
 import 'dart:ui' as ui;
 
@@ -6,6 +7,7 @@ import 'package:piping_engineer/core/theme/app_theme.dart';
 import 'package:piping_engineer/core/diagnostics/error_logger.dart';
 import 'package:piping_engineer/core/diagnostics/error_log_page.dart';
 import 'package:piping_engineer/features/notes/pages/notes_page.dart';
+import 'package:piping_engineer/features/calculations/calculations_page.dart';
 import 'package:piping_engineer/core/widgets/app_text.dart';
 import 'package:piping_engineer/core/widgets/valve_diagrams.dart';
 
@@ -179,7 +181,10 @@ class HomePage extends StatelessWidget {
             'محاسبات مهندسی',
             'ابزارهای محاسباتی پایپینگ',
             Icons.calculate,
-            () => _showMessage(context, 'بخش محاسبات در مرحله توسعه است.'),
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CalculationsPage()),
+            ),
           ),
           _menuCard(
             context,
