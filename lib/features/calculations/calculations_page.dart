@@ -13,37 +13,37 @@ class CalculationsPage extends StatefulWidget {
 class _CalculationsPageState extends State<CalculationsPage> {
   static const Color primary = Color(0xFF07569A);
 
-  final _flow = TextEditingController(text: '50');
-  final _velocity = TextEditingController(text: '2');
-  final _diameter = TextEditingController(text: '100');
+  final _flow = TextEditingController();
+  final _velocity = TextEditingController();
+  final _diameter = TextEditingController();
 
-  final _length = TextEditingController(text: '100');
-  final _friction = TextEditingController(text: '0.02');
-  final _density = TextEditingController(text: '1000');
+  final _length = TextEditingController();
+  final _friction = TextEditingController();
+  final _density = TextEditingController();
 
-  final _pressureDiff = TextEditingController(text: '2');
-  final _elevation = TextEditingController(text: '0');
-  final _efficiency = TextEditingController(text: '75');
+  final _pressureDiff = TextEditingController();
+  final _elevation = TextEditingController();
+  final _efficiency = TextEditingController();
 
-  final _designPressure = TextEditingController(text: '1');
-  final _outsideDiameter = TextEditingController(text: '114.3');
-  final _allowableStress = TextEditingController(text: '138');
-  final _jointFactor = TextEditingController(text: '1');
-  final _weldFactor = TextEditingController(text: '1');
-  final _yFactor = TextEditingController(text: '0.4');
-  final _corrosion = TextEditingController(text: '3');
+  final _designPressure = TextEditingController();
+  final _outsideDiameter = TextEditingController();
+  final _allowableStress = TextEditingController();
+  final _jointFactor = TextEditingController();
+  final _weldFactor = TextEditingController();
+  final _yFactor = TextEditingController();
+  final _corrosion = TextEditingController();
 
-  final _barInput = TextEditingController(text: '3');
-  final _temperatureInput = TextEditingController(text: '40');
-  final _flowConvert = TextEditingController(text: '50');
-  final _lengthConvert = TextEditingController(text: '100');
+  final _barInput = TextEditingController();
+  final _temperatureInput = TextEditingController();
+  final _flowConvert = TextEditingController();
+  final _lengthConvert = TextEditingController();
 
-  final List<TextEditingController> _controllers = [];
+  late final List<TextEditingController> _controllers;
 
   @override
   void initState() {
     super.initState();
-    _controllers.addAll([
+    _controllers = [
       _flow, _velocity, _diameter,
       _length, _friction, _density,
       _pressureDiff, _elevation, _efficiency,
@@ -52,7 +52,14 @@ class _CalculationsPageState extends State<CalculationsPage> {
       _weldFactor, _yFactor, _corrosion,
       _barInput, _temperatureInput,
       _flowConvert, _lengthConvert,
-    ]);
+    ];
+  }
+
+  void _clearAll() {
+    for (final controller in _controllers) {
+      controller.clear();
+    }
+    setState(() {});
   }
 
   @override
@@ -70,14 +77,12 @@ class _CalculationsPageState extends State<CalculationsPage> {
   }
 
   String _format(double? value, [int digits = 2]) {
-    if (value == null || !value.isFinite) return '---';
+    if (value == null || !value.isFinite) return '';
     return value.toStringAsFixed(digits);
   }
 
   bool _valid(List<double?> values) {
-    return values.every(
-      (v) => v != null && v.isFinite,
-    );
+    return values.every((v) => v != null && v.isFinite);
   }
 
   Widget _field(
@@ -112,6 +117,7 @@ class _CalculationsPageState extends State<CalculationsPage> {
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
               suffixText: unit,
+              hintText: 'عدد را وارد کنید',
               isDense: true,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(9),
@@ -157,6 +163,8 @@ class _CalculationsPageState extends State<CalculationsPage> {
   }
 
   Widget _answer(String title, String value, {String unit = ''}) {
+    final hasValue = value.isNotEmpty;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -176,12 +184,12 @@ class _CalculationsPageState extends State<CalculationsPage> {
           ),
           const SizedBox(height: 5),
           Text(
-            '$value $unit',
-            textDirection: TextDirection.ltr,
-            style: const TextStyle(
-              fontSize: 21,
+            hasValue ? '$value $unit' : 'پس از تکمیل ورودی‌ها نمایش داده می‌شود',
+            textDirection: hasValue ? TextDirection.ltr : TextDirection.rtl,
+            style: TextStyle(
+              fontSize: hasValue ? 21 : 12,
               fontWeight: FontWeight.bold,
-              color: Colors.green,
+              color: hasValue ? Colors.green : Colors.grey,
             ),
           ),
         ],
@@ -292,11 +300,7 @@ class _CalculationsPageState extends State<CalculationsPage> {
                   '(π × ${_format(v!)})]'
               : 'مقادیر معتبر وارد کنید.',
         ),
-        _answer(
-          'قطر داخلی تئوری',
-          _format(d),
-          unit: 'mm',
-        ),
+        _answer('قطر داخلی تئوری', _format(d), unit: 'mm'),
         _answer(
           'قطر بر حسب اینچ',
           _format(d == null ? null : d / 25.4, 3),
@@ -643,10 +647,10 @@ class _CalculationsPageState extends State<CalculationsPage> {
                 color: primary,
                 borderRadius: BorderRadius.circular(13),
               ),
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'ماشین‌حساب مهندسی پایپینگ',
                     style: TextStyle(
                       color: Colors.white,
@@ -654,13 +658,26 @@ class _CalculationsPageState extends State<CalculationsPage> {
                       fontSize: 19,
                     ),
                   ),
-                  SizedBox(height: 7),
-                  Text(
+                  const SizedBox(height: 7),
+                  const Text(
                     'تمام محاسبات در یک صفحه؛ '
                     'اعداد را وارد کنید و نتیجه را ببینید.',
                     style: TextStyle(
                       color: Colors.white,
                       height: 1.8,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: OutlinedButton.icon(
+                      onPressed: _clearAll,
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('پاک کردن همه ورودی‌ها'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white),
+                      ),
                     ),
                   ),
                 ],
