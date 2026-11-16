@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'features/calculation/calculation_page.dart';
+import 'features/calculations/calculation_page.dart';
 
 void main() => runApp(const PipingEngineerApp());
 
