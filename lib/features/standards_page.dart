@@ -441,23 +441,56 @@ class _StandardPdfPageState extends State<StandardPdfPage> {
   final PdfViewerController _pdfController = PdfViewerController();
 
   late final TextEditingController _searchController;
-  late final PdfTextSearcher _textSearcher;
+
+  PdfTextSearcher? _textSearcher;
 
   bool _hasSearched = false;
 
   @override
   void initState() {
     super.initState();
-
     _searchController = TextEditingController();
-
-    _textSearcher = PdfTextSearcher(_pdfController)
-      ..addListener(_onSearchUpdate);
   }
 
   void _onSearchUpdate() {
     if (mounted) {
       setState(() {});
+    }
+  }
+
+  void _onViewerReady(
+    PdfDocument document,
+    PdfViewerController controller,
+  ) {
+    _disposeTextSearcher();
+
+    _textSearcher = PdfTextSearcher(controller)
+      ..addListener(_onSearchUpdate);
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _onDocumentChanged(PdfDocument? document) {
+    if (document == null) {
+      _disposeTextSearcher();
+
+      if (mounted) {
+        setState(() {
+          _hasSearched = false;
+        });
+      }
+    }
+  }
+
+  void _disposeTextSearcher() {
+    final searcher = _textSearcher;
+    _textSearcher = null;
+
+    if (searcher != null) {
+      searcher.removeListener(_onSearchUpdate);
+      searcher.dispose();
     }
   }
 
@@ -470,9 +503,10 @@ class _StandardPdfPageState extends State<StandardPdfPage> {
   }
 
   void _searchPdf() {
+    final searcher = _textSearcher;
     final query = _normalizeSearchText(_searchController.text);
 
-    if (query.isEmpty) return;
+    if (query.isEmpty || searcher == null) return;
 
     FocusScope.of(context).unfocus();
 
@@ -480,16 +514,19 @@ class _StandardPdfPageState extends State<StandardPdfPage> {
       _hasSearched = true;
     });
 
-    _textSearcher.resetTextSearch();
+    searcher.resetTextSearch();
 
-    _textSearcher.startTextSearch(
+    searcher.startTextSearch(
       query,
       caseInsensitive: true,
     );
   }
 
   Future<void> _openSearchResult(int index) async {
-    await _textSearcher.goToMatchOfIndex(index);
+    final searcher = _textSearcher;
+    if (searcher == null) return;
+
+    await searcher.goToMatchOfIndex(index);
 
     if (mounted) {
       setState(() {});
@@ -499,15 +536,13 @@ class _StandardPdfPageState extends State<StandardPdfPage> {
   @override
   void dispose() {
     _searchController.dispose();
-
-    _textSearcher.removeListener(_onSearchUpdate);
-    _textSearcher.dispose();
-
+    _disposeTextSearcher();
     super.dispose();
   }
 
   Widget _buildSearchPanel() {
-    final matches = _textSearcher.matches;
+    final searcher = _textSearcher;
+    final matches = searcher?.matches ?? [];
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -519,6 +554,7 @@ class _StandardPdfPageState extends State<StandardPdfPage> {
               Expanded(
                 child: TextField(
                   controller: _searchController,
+                  enabled: searcher != null,
                   textDirection: TextDirection.ltr,
                   textAlign: TextAlign.start,
                   decoration: const InputDecoration(
@@ -532,7 +568,7 @@ class _StandardPdfPageState extends State<StandardPdfPage> {
               ),
               const SizedBox(width: 8),
               IconButton.filled(
-                onPressed: _searchPdf,
+                onPressed: searcher == null ? null : _searchPdf,
                 icon: const Icon(Icons.search),
                 tooltip: 'جست‌وجو',
               ),
@@ -570,7 +606,7 @@ class _StandardPdfPageState extends State<StandardPdfPage> {
                           ),
                         ),
                       ),
-                      if (_textSearcher.isSearching)
+                      if (searcher?.isSearching == true)
                         const SizedBox(
                           width: 18,
                           height: 18,
@@ -621,7 +657,7 @@ class _StandardPdfPageState extends State<StandardPdfPage> {
                       },
                     ),
                   )
-                else if (!_textSearcher.isSearching)
+                else if (searcher?.isSearching != true)
                   const Padding(
                     padding: EdgeInsets.all(14),
                     child: Text(
@@ -651,8 +687,11 @@ class _StandardPdfPageState extends State<StandardPdfPage> {
               widget.filePath,
               controller: _pdfController,
               params: PdfViewerParams(
+                onViewerReady: _onViewerReady,
+                onDocumentChanged: _onDocumentChanged,
                 pagePaintCallbacks: [
-                  _textSearcher.pageTextMatchPaintCallback,
+                  if (_textSearcher != null)
+                    _textSearcher!.pageTextMatchPaintCallback,
                 ],
               ),
             ),
