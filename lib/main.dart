@@ -1,6 +1,9 @@
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+
 import 'features/calculations/calculations_page.dart';
+import 'features/standards_page.dart';
 
 void main() => runApp(const PipingEngineerApp());
 
@@ -31,13 +34,22 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = <(String, IconData, Widget)>[
       ('تحلیل نقشه پایپینگ', Icons.document_scanner, const DrawingPage()),
-      ('آموزش پایپینگ', Icons.menu_book,
-          const PlaceholderPage(title: 'آموزش پایپینگ')),
-      ('استانداردها و مراجع', Icons.library_books,
-          const PlaceholderPage(title: 'استانداردها و مراجع')),
+      (
+        'آموزش پایپینگ',
+        Icons.menu_book,
+        const PlaceholderPage(title: 'آموزش پایپینگ'),
+      ),
+      (
+        'استانداردها و مراجع',
+        Icons.library_books,
+        const StandardsPage(),
+      ),
       ('محاسبات مهندسی', Icons.calculate, const CalculationsPage()),
-      ('تجهیزات و شیرآلات', Icons.settings,
-          const PlaceholderPage(title: 'تجهیزات و شیرآلات')),
+      (
+        'تجهیزات و شیرآلات',
+        Icons.settings,
+        const PlaceholderPage(title: 'تجهیزات و شیرآلات'),
+      ),
     ];
 
     return Scaffold(
