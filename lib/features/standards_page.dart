@@ -591,10 +591,6 @@ class _StandardPdfPageState extends State<StandardPdfPage> {
                       itemBuilder: (context, index) {
                         final match = matches[index];
 
-                        final matchText = match.fragments
-                            .map((fragment) => fragment.text)
-                            .join();
-
                         return ListTile(
                           dense: true,
                           leading: CircleAvatar(
@@ -611,10 +607,10 @@ class _StandardPdfPageState extends State<StandardPdfPage> {
                             ),
                           ),
                           subtitle: Text(
-                            matchText,
+                            match.text,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            textDirection: TextDirection.auto,
+                            textDirection: TextDirection.rtl,
                           ),
                           trailing: const Icon(
                             Icons.arrow_forward_ios,
