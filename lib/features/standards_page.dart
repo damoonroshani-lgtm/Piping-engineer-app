@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:pdfrx/pdfrx.dart';
 
 class StandardsPage extends StatefulWidget {
   const StandardsPage({super.key});
@@ -423,7 +423,7 @@ class _StandardDetailsDialogState
   }
 }
 
-class StandardPdfPage extends StatelessWidget {
+class StandardPdfPage extends StatefulWidget {
   final String title;
   final String filePath;
 
@@ -434,17 +434,234 @@ class StandardPdfPage extends StatelessWidget {
   });
 
   @override
+  State<StandardPdfPage> createState() => _StandardPdfPageState();
+}
+
+class _StandardPdfPageState extends State<StandardPdfPage> {
+  final PdfViewerController _pdfController = PdfViewerController();
+
+  late final TextEditingController _searchController;
+  late final PdfTextSearcher _textSearcher;
+
+  bool _hasSearched = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _searchController = TextEditingController();
+
+    _textSearcher = PdfTextSearcher(_pdfController)
+      ..addListener(_onSearchUpdate);
+  }
+
+  void _onSearchUpdate() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  String _normalizeSearchText(String value) {
+    return value
+        .replaceAll('ي', 'ی')
+        .replaceAll('ك', 'ک')
+        .replaceAll('ۀ', 'ه')
+        .trim();
+  }
+
+  void _searchPdf() {
+    final query = _normalizeSearchText(_searchController.text);
+
+    if (query.isEmpty) return;
+
+    FocusScope.of(context).unfocus();
+
+    setState(() {
+      _hasSearched = true;
+    });
+
+    _textSearcher.resetTextSearch();
+
+    _textSearcher.startTextSearch(
+      query,
+      caseInsensitive: true,
+    );
+  }
+
+  Future<void> _openSearchResult(int index) async {
+    await _textSearcher.goToMatchOfIndex(index);
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+
+    _textSearcher.removeListener(_onSearchUpdate);
+    _textSearcher.dispose();
+
+    super.dispose();
+  }
+
+  Widget _buildSearchPanel() {
+    final matches = _textSearcher.matches;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  textDirection: TextDirection.ltr,
+                  textAlign: TextAlign.start,
+                  decoration: const InputDecoration(
+                    hintText: 'جست‌وجو در متن PDF؛ مثلاً Welding',
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  onSubmitted: (_) => _searchPdf(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton.filled(
+                onPressed: _searchPdf,
+                icon: const Icon(Icons.search),
+                tooltip: 'جست‌وجو',
+              ),
+            ],
+          ),
+        ),
+        if (_hasSearched)
+          Container(
+            constraints: const BoxConstraints(maxHeight: 190),
+            margin: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: Theme.of(context).dividerColor,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.find_in_page, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'تعداد نتایج: ${matches.length}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      if (_textSearcher.isSearching)
+                        const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                if (matches.isNotEmpty)
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: matches.length,
+                      separatorBuilder: (_, __) =>
+                          const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final match = matches[index];
+
+                        final matchText = match.fragments
+                            .map((fragment) => fragment.text)
+                            .join();
+
+                        return ListTile(
+                          dense: true,
+                          leading: CircleAvatar(
+                            radius: 17,
+                            child: Text(
+                              '${match.pageNumber}',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                          title: Text(
+                            'صفحه ${match.pageNumber}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          subtitle: Text(
+                            matchText,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textDirection: TextDirection.auto,
+                          ),
+                          trailing: const Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                          ),
+                          onTap: () => _openSearchResult(index),
+                        );
+                      },
+                    ),
+                  )
+                else if (!_textSearcher.isSearching)
+                  const Padding(
+                    padding: EdgeInsets.all(14),
+                    child: Text(
+                      'نتیجه‌ای پیدا نشد. ممکن است PDF اسکن‌شده باشد و متن قابل جست‌وجو نداشته باشد.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
+        title: Text(widget.title),
+        centerTitle: true,
       ),
-      body: PDFView(
-        filePath: filePath,
-        enableSwipe: true,
-        swipeHorizontal: false,
-        autoSpacing: true,
-        pageFling: true,
+      body: Column(
+        children: [
+          _buildSearchPanel(),
+          Expanded(
+            child: PdfViewer.file(
+              widget.filePath,
+              controller: _pdfController,
+              params: PdfViewerParams(
+                pagePaintCallbacks: [
+                  _textSearcher.pageTextMatchPaintCallback,
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
