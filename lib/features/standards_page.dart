@@ -1,5 +1,4 @@
 
-
 import 'dart:convert';
 import 'dart:io';
 
@@ -39,9 +38,11 @@ class _StandardsPageState extends State<StandardsPage> {
   Future<Directory> getLibraryDirectory() async {
     final appDir = await getApplicationDocumentsDirectory();
     final directory = Directory('${appDir.path}/standards_pdfs');
+
     if (!await directory.exists()) {
       await directory.create(recursive: true);
     }
+
     return directory;
   }
 
@@ -86,103 +87,29 @@ class _StandardsPageState extends State<StandardsPage> {
         allowedExtensions: ['pdf'],
       );
 
-      if (result == null || result.files.single.path == null) return;
+      if (result == null || result.files.single.path == null) {
+        return;
+      }
 
       final sourceFile = File(result.files.single.path!);
 
-      if (!await sourceFile.exists()) return;
-
-      if (!mounted) return;
-
-      final titleController = TextEditingController();
-      final codeController = TextEditingController();
-      String selectedCategory = categories.first;
+      if (!await sourceFile.exists() || !mounted) return;
 
       final details = await showDialog<Map<String, String>>(
         context: context,
-        builder: (dialogContext) {
-          return StatefulBuilder(
-            builder: (context, updateDialog) {
-              return AlertDialog(
-                title: const Text('مشخصات استاندارد'),
-                content: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextField(
-                        controller: titleController,
-                        decoration: const InputDecoration(
-                          labelText: 'نام استاندارد',
-                          hintText: 'مثلاً استاندارد پایپینگ',
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: codeController,
-                        decoration: const InputDecoration(
-                          labelText: 'شماره استاندارد',
-                          hintText: 'مثلاً ASME B31.3',
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        value: selectedCategory,
-                        decoration: const InputDecoration(
-                          labelText: 'دسته‌بندی',
-                        ),
-                        isExpanded: true,
-                        items: categories.map((category) {
-                          return DropdownMenuItem(
-                            value: category,
-                            child: Text(category),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            updateDialog(() {
-                              selectedCategory = value;
-                            });
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(dialogContext),
-                    child: const Text('انصراف'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (titleController.text.trim().isEmpty ||
-                          codeController.text.trim().isEmpty) {
-                        return;
-                      }
-
-                      Navigator.pop(dialogContext, {
-                        'title': titleController.text.trim(),
-                        'code': codeController.text.trim(),
-                        'category': selectedCategory,
-                      });
-                    },
-                    child: const Text('ادامه'),
-                  ),
-                ],
-              );
-            },
-          );
-        },
+        useRootNavigator: true,
+        builder: (_) => StandardDetailsDialog(
+          categories: categories,
+        ),
       );
 
-      titleController.dispose();
-      codeController.dispose();
-
-      if (details == null || !mounted) return;
+      if (!mounted || details == null) return;
 
       final directory = await getLibraryDirectory();
+
       final fileName =
           '${DateTime.now().microsecondsSinceEpoch}_${p.basename(sourceFile.path)}';
+
       final destination = File('${directory.path}/$fileName');
 
       await sourceFile.copy(destination.path);
@@ -197,20 +124,21 @@ class _StandardsPageState extends State<StandardsPage> {
 
       await saveStandards();
 
-      if (mounted) {
-        setState(() {});
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('فایل استاندارد با موفقیت اضافه شد.'),
-          ),
-        );
-      }
+      if (!mounted) return;
+
+      setState(() {});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('فایل استاندارد با موفقیت اضافه شد.'),
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطا در افزودن فایل: $e')),
-        );
-      }
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('خطا در افزودن فایل: $e')),
+      );
     }
   }
 
@@ -219,26 +147,31 @@ class _StandardsPageState extends State<StandardsPage> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('حذف استاندارد'),
         content: Text('آیا فایل ${item['code']} حذف شود؟'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () {
+              Navigator.of(dialogContext).pop(false);
+            },
             child: const Text('انصراف'),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () {
+              Navigator.of(dialogContext).pop(true);
+            },
             child: const Text('حذف'),
           ),
         ],
       ),
     );
 
-    if (confirmed != true) return;
+    if (confirmed != true || !mounted) return;
 
     try {
       final pdfFile = File(item['filePath']);
+
       if (await pdfFile.exists()) {
         await pdfFile.delete();
       }
@@ -246,13 +179,15 @@ class _StandardsPageState extends State<StandardsPage> {
       standards.removeAt(index);
       await saveStandards();
 
-      if (mounted) setState(() {});
-    } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('خطا در حذف فایل: $e')),
-        );
+        setState(() {});
       }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('خطا در حذف فایل: $e')),
+      );
     }
   }
 
@@ -372,6 +307,118 @@ class _StandardsPageState extends State<StandardsPage> {
                     }),
                   ],
                 ),
+    );
+  }
+}
+
+class StandardDetailsDialog extends StatefulWidget {
+  final List<String> categories;
+
+  const StandardDetailsDialog({
+    super.key,
+    required this.categories,
+  });
+
+  @override
+  State<StandardDetailsDialog> createState() =>
+      _StandardDetailsDialogState();
+}
+
+class _StandardDetailsDialogState
+    extends State<StandardDetailsDialog> {
+  late final TextEditingController _titleController;
+  late final TextEditingController _codeController;
+
+  late String _selectedCategory;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _titleController = TextEditingController();
+    _codeController = TextEditingController();
+    _selectedCategory = widget.categories.first;
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _codeController.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final title = _titleController.text.trim();
+    final code = _codeController.text.trim();
+
+    if (title.isEmpty || code.isEmpty) return;
+
+    Navigator.of(context, rootNavigator: true).pop({
+      'title': title,
+      'code': code,
+      'category': _selectedCategory,
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('مشخصات استاندارد'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _titleController,
+              decoration: const InputDecoration(
+                labelText: 'نام استاندارد',
+                hintText: 'مثلاً استاندارد پایپینگ',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _codeController,
+              decoration: const InputDecoration(
+                labelText: 'شماره استاندارد',
+                hintText: 'مثلاً ASME B31.3',
+              ),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: _selectedCategory,
+              decoration: const InputDecoration(
+                labelText: 'دسته‌بندی',
+              ),
+              isExpanded: true,
+              items: widget.categories.map((category) {
+                return DropdownMenuItem<String>(
+                  value: category,
+                  child: Text(category),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value == null) return;
+
+                setState(() {
+                  _selectedCategory = value;
+                });
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context, rootNavigator: true).pop();
+          },
+          child: const Text('انصراف'),
+        ),
+        ElevatedButton(
+          onPressed: _save,
+          child: const Text('ادامه'),
+        ),
+      ],
     );
   }
 }
